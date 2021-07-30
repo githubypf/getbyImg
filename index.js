@@ -22,6 +22,12 @@ function download(url, callback) {
 
 var j = schedule.scheduleJob({hour: 17, minute: 54,second:50, dayOfWeek: 4}, function(){
     console.log('每周四执行一次,拉取图片');
+    
+    runGetImg();
+    
+  });
+
+function runGetImg() {
     for (let i = -1; i <= 10; i++) {
         const option = {
             hostname: 'bird.ioliu.cn',
@@ -53,8 +59,7 @@ var j = schedule.scheduleJob({hour: 17, minute: 54,second:50, dayOfWeek: 4}, fun
                             format = 'jpeg'
                         }
                         let imgPath = `/${copyright}.${format}`;
-                        // C:\Users\嘲风\Pictures __dirname + "/imgs"
-                        fs.writeFile("C:/Users/嘲风/Pictures" + imgPath, imgData, "binary", function (err) {
+                        fs.writeFile("E:/Pictures" + imgPath, imgData, "binary", function (err) {
                             console.log('下载成功---');
                         })
                     })
@@ -62,8 +67,6 @@ var j = schedule.scheduleJob({hour: 17, minute: 54,second:50, dayOfWeek: 4}, fun
             }
         })
     }
-    
-    
-  });
+}
 
-
+runGetImg()
