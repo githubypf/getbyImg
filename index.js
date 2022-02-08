@@ -2,54 +2,40 @@ const fs = require("fs");
 const https = require("https");
 var schedule = require('node-schedule');
 
-function download(url, callback) {
-    https.get(url, function (res) {
-        let data = "";
-        res.on("data", function (chunk) {
-            data += chunk;
-        });
-        res.on("end", function () {
-            data = JSON.parse(data)
-            let copyright = data.images[0].copyright;
-            let imgSrc = 'https://www.bing.com' + data.images[0].url
-            copyright = copyright.trim().split(" ");
-            callback(imgSrc, copyright[0])
-        })
-    }).on("error", function (err) {
-        console.log(err)
-    })
+function download(i, callback) {
+    //模拟发送http请求
+    var request = require("request");
+    //get请求
+    request(`https://bing.com/HPImageArchive.aspx?format=js&idx=${i}&n=1`, function(error, response, body) {
+        if (!error && response.statusCode == 200) {
+            let res = JSON.parse(body);
+            let url;
+            let copyright;
+            res.images.forEach(item => {
+                url = 'https://bing.com' + item.url;
+                copyright = item.copyright;
+            });
+            callback(url, copyright);
+        }
+    });
 }
 
-var j = schedule.scheduleJob({hour: 17, minute: 54,second:50, dayOfWeek: 4}, function(){
+var j = schedule.scheduleJob({ hour: 17, minute: 54, second: 50, dayOfWeek: 4 }, function() {
     console.log('每周四执行一次,拉取图片');
-    
     runGetImg();
-    
-  });
+});
 
 function runGetImg() {
-    for (let i = -1; i <= 10; i++) {
-        const option = {
-            hostname: 'bird.ioliu.cn',
-            path: `https://bird.ioliu.cn/v1/?url=https://www.bing.com/HPImageArchive.aspx?format=js&idx=${i}&n=1`,
-            headers: {
-                'User-Agent': 'PostmanRuntime/7.15.2', // 必须设置
-                'Cache-Control': "no-cache",
-                'Host': 'bird.ioliu.cn',
-                'Accept': '*/*',
-                'Accept-Encoding': 'gzip,deflate',
-                'Connection': 'keep-alive',
-            }
-        };
-        download(option, function (imgSrc, copyright) {
+    for (let i = 0; i <= 10; i++) {
+        download(i, function(imgSrc, copyright) {
             if (imgSrc) {
-                https.get(imgSrc, function (res) {
+                https.get(imgSrc, function(res) {
                     let imgData = "";
                     res.setEncoding("binary");
-                    res.on("data", function (chunk) {
+                    res.on("data", function(chunk) {
                         imgData += chunk;
                     });
-                    res.on("end", function () {
+                    res.on("end", function() {
                         let format = '';
                         if (imgSrc.search("jpg") != -1) {
                             format = 'jpg'
@@ -58,8 +44,10 @@ function runGetImg() {
                         } else if (imgSrc.search("jpeg") != -1) {
                             format = 'jpeg'
                         }
-                        let imgPath = `/${copyright}.${format}`;
-                        fs.writeFile("E:/Pictures" + imgPath, imgData, "binary", function (err) {
+                        copyright = copyright.split('，')[0]
+                        let imgPath = `${copyright}.${format}`;
+                        let fireUrl = "c:/Users/yiduo/Pictures/" + imgPath
+                        fs.writeFile(fireUrl, imgData, "binary", function(err) {
                             console.log('下载成功---');
                         })
                     })
